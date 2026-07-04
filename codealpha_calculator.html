@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1c1c1e">
+  <title>Calculator</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #1c1c1e;
+      --display-bg: #2c2c2e;
+      --text: #ffffff;
+      --text-dim: #8e8e93;
+      --btn-num: #3a3a3c;
+      --btn-op: #ff9f0a;
+      --btn-func: #636366;
+      --btn-eq: #30d158;
+      --btn-num-active: #48484a;
+      --btn-op-active: #ffb340;
+      --btn-func-active: #48484a;
+      --btn-eq-active: #34e065;
+      --error: #ff453a;
+      --gap: clamp(6px, 1.5vw, 10px);
+      --btn-radius: clamp(28px, 8vw, 40px);
+      --display-size: clamp(2.2rem, 10vw, 3.5rem);
+      --preview-size: clamp(0.85rem, 3.5vw, 1.1rem);
+      --btn-font: clamp(1.2rem, 5vw, 1.6rem);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 420px;
+      height: 100%;
+      max-height: 860px;
+      display: flex;
+      flex-direction: column;
+      padding: var(--gap);
+    }
+
+    /* Display */
+    .display {
+      flex: 0 0 auto;
+      background: var(--display-bg);
+      border-radius: 16px;
+      padding: clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px);
+      margin-bottom: var(--gap);
+      min-height: clamp(100px, 22vh, 140px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+
+    .preview {
+      font-size: var(--preview-size);
+      color: var(--text-dim);
+      text-align: right;
+      min-height: 1.4em;
+      word-break: break-all;
+      opacity: 0.9;
+    }
+
+    .result {
+      font-size: var(--display-size);
+      font-weight: 700;
+      text-align: right;
+      line-height: 1.1;
+      word-break: break-all;
+      transition: color 0.15s;
+    }
+
+    .result.error { color: var(--error); }
+
+    /* Button grid */
+    .keypad {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: var(--gap);
+      min-height: 0;
+    }
+
+    .key {
+      border: none;
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font);
+      font-family: inherit;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.1s, transform 0.08s;
+      min-height: clamp(52px, 14vw, 72px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .key:active { transform: scale(0.94); }
+
+    .key.num  { background: var(--btn-num); }
+    .key.op   { background: var(--btn-op); font-size: calc(var(--btn-font) * 1.15); }
+    .key.func { background: var(--btn-func); font-size: calc(var(--btn-font) * 0.95); }
+    .key.eq   { background: var(--btn-eq); font-weight: 700; }
+
+    .key.num:active  { background: var(--btn-num-active); }
+    .key.op:active   { background: var(--btn-op-active); }
+    .key.func:active { background: var(--btn-func-active); }
+    .key.eq:active   { background: var(--btn-eq-active); }
+
+    .key.zero { grid-column: span 2; }
+
+    /* Desktop hover */
+    @media (hover: hover) and (pointer: fine) {
+      .key.num:hover  { background: var(--btn-num-active); }
+      .key.op:hover   { background: var(--btn-op-active); }
+      .key.func:hover { background: var(--btn-func-active); }
+      .key.eq:hover   { background: var(--btn-eq-active); }
+    }
+
+    /* Small phones */
+    @media (max-height: 580px) {
+      :root {
+        --display-size: clamp(1.6rem, 8vw, 2.4rem);
+        --btn-font: clamp(1rem, 4.5vw, 1.3rem);
+      }
+      .display { min-height: 80px; padding: 12px 16px; }
+      .key { min-height: 44px; border-radius: 22px; }
+    }
+
+    /* Very narrow screens */
+    @media (max-width: 320px) {
+      :root { --gap: 5px; }
+    }
+
+    /* Large screens / tablets landscape */
+    @media (min-width: 768px) {
+      body {
+        background: linear-gradient(145deg, #111 0%, #1c1c1e 50%, #252528 100%);
+      }
+      .calculator {
+        height: auto;
+        min-height: 640px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+        border-radius: 24px;
+        padding: 16px;
+      }
+    }
+
+    /* Landscape phone */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body { align-items: stretch; }
+      .calculator {
+        max-width: 100%;
+        max-height: 100%;
+        flex-direction: row;
+        gap: var(--gap);
+        padding: 8px 12px;
+      }
+      .display {
+        flex: 1;
+        margin-bottom: 0;
+        min-height: unset;
+      }
+      .keypad {
+        flex: 1.2;
+        grid-template-rows: repeat(5, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator" role="application" aria-label="Calculator">
+    <div class="display">
+      <div class="preview" id="preview" aria-live="polite"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="keypad" id="keypad">
+      <button class="key func" data-key="AC">AC</button>
+      <button class="key func" data-key="⌫">⌫</button>
+      <button class="key func" data-key="±">±</button>
+      <button class="key op"   data-key="÷">÷</button>
+
+      <button class="key num" data-key="7">7</button>
+      <button class="key num" data-key="8">8</button>
+      <button class="key num" data-key="9">9</button>
+      <button class="key op"  data-key="×">×</button>
+
+      <button class="key num" data-key="4">4</button>
+      <button class="key num" data-key="5">5</button>
+      <button class="key num" data-key="6">6</button>
+      <button class="key op"  data-key="−">−</button>
+
+      <button class="key num" data-key="1">1</button>
+      <button class="key num" data-key="2">2</button>
+      <button class="key num" data-key="3">3</button>
+      <button class="key op"  data-key="+">+</button>
+
+      <button class="key num zero" data-key="0">0</button>
+      <button class="key num" data-key=".">.</button>
+      <button class="key eq"  data-key="=">=</button>
+    </div>
+  </div>
+
+  <script>
+    const OP_MAP = { "÷": "/", "×": "*", "−": "-" };
+    const OPS = new Set(["÷", "×", "−", "+"]);
+
+    let expression = "";
+    let justCalculated = false;
+
+    const previewEl = document.getElementById("preview");
+    const resultEl  = document.getElementById("result");
+
+    function toInternal(char) { return OP_MAP[char] ?? char; }
+
+    function toDisplay(expr) {
+      return Object.entries(OP_MAP).reduce((s, [k, v]) => s.replaceAll(v, k), expr);
+    }
+
+    function updateDisplay() {
+      if (expression === "Error") {
+        previewEl.textContent = "";
+        resultEl.textContent = "Error";
+        resultEl.classList.add("error");
+        return;
+      }
+
+      resultEl.classList.remove("error");
+      resultEl.textContent = toDisplay(expression) || "0";
+
+      try {
+        let val = Function('"use strict"; return (' + expression + ")")();
+        if (typeof val === "number" && val === Math.floor(val)) val = Math.floor(val);
+        previewEl.textContent = String(val);
+      } catch {
+        previewEl.textContent = "";
+      }
+    }
+
+    function calculate() {
+      try {
+        let val = Function('"use strict"; return (' + expression + ")")();
+        if (typeof val === "number" && val === Math.floor(val)) val = Math.floor(val);
+        expression = String(val);
+        justCalculated = true;
+      } catch {
+        expression = "Error";
+      }
+      updateDisplay();
+    }
+
+    function onPress(char) {
+      if (expression === "Error") expression = "";
+
+      if (char === "AC") {
+        expression = "";
+        justCalculated = false;
+      } else if (char === "⌫") {
+        expression = expression.slice(0, -1);
+        justCalculated = false;
+      } else if (char === "±") {
+        if (expression.startsWith("-")) expression = expression.slice(1);
+        else if (expression) expression = "-" + expression;
+      } else if (char === "=") {
+        calculate();
+        return;
+      } else {
+        if (justCalculated && !OPS.has(char)) expression = "";
+        justCalculated = false;
+        const internal = toInternal(char);
+        if ("+-*/".includes(internal) && expression && "+-*/".includes(expression.at(-1))) {
+          expression = expression.slice(0, -1);
+        }
+        expression += internal;
+      }
+      updateDisplay();
+    }
+
+    document.getElementById("keypad").addEventListener("click", e => {
+      const btn = e.target.closest("[data-key]");
+      if (btn) onPress(btn.dataset.key);
+    });
+
+    document.addEventListener("keydown", e => {
+      const map = { "/": "÷", "*": "×", "-": "−", "+": "+", Enter: "=", Backspace: "⌫", Escape: "AC" };
+      const char = map[e.key] ?? e.key;
+      if ("0123456789.+-*/".includes(char) || char in map) {
+        e.preventDefault();
+        onPress(char);
+      }
+    });
+
+    // Prevent accidental page scroll on button taps (iOS)
+    document.querySelectorAll(".key").forEach(btn => {
+      btn.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+    });
+  </script>
+</body>
+</html>
